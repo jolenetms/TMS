@@ -40,7 +40,7 @@ for sessionindex = 3
     % Extract prior 3 ECT sessions
     HAMD_pre = HAMD_by_session_array(:, (sessionindex - 2):(sessionindex));  
 
-    if sessionindex == 3
+    if sessionindex == 4:17
          HAMD_pre = HAMD_by_session_array(:, (sessionindex - 1):(sessionindex));  
     end
 
