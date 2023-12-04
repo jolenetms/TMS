@@ -190,7 +190,7 @@ for personIndex = 1:TotalParticipants
     ID = HAMD_by_session.ID(personIndex);
 
     %Plot the HAMD data for the current person
-    if sg_ppt == 1
+    if sg_ppt == 1 & all_crit == 1
         plot(0:(width(individual_HAMD) - 1), table2array(individual_HAMD), '-r*')
 
         % Add labels, titles, legends, etc. to the figure
@@ -201,8 +201,32 @@ for personIndex = 1:TotalParticipants
         %Set xlim and ylim
         xlim([0, max(18)]);
         ylim([min(0), max(60)]);
-    else
+        
+    elseif sg_ppt == 1 & all_crit == 0
+        plot(0:(width(individual_HAMD) - 1), table2array(individual_HAMD), '--r*')
 
+        % Add labels, titles, legends, etc. to the figure
+        title(['Subject ', num2str(ID), ' SG: session ', num2str(sg_session_n)]);
+        xlabel('ECT Treatment Visit');
+        ylabel('HAM-D Score');
+
+        %Set xlim and ylim
+        xlim([0, max(18)]);
+        ylim([min(0), max(60)]);
+        
+    elseif sg_ppt == 0 & all_crit = 1
+        plot(0:(width(individual_HAMD) - 1), table2array(individual_HAMD), '--*')
+
+        % Add labels, titles, legends, etc. to the figure
+        title(['Subject ', num2str(ID), ' SG: session ', num2str(sg_session_n)]);
+        xlabel('ECT Treatment Visit');
+        ylabel('HAM-D Score');
+
+        %Set xlim and ylim
+        xlim([0, max(18)]);
+        ylim([min(0), max(60)]);
+        
+    else
     plot(0:(width(individual_HAMD) - 1), table2array(individual_HAMD), '-*')
 
     % Add labels, titles, legends, etc. to the figure
