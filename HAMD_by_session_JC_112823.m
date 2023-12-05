@@ -30,22 +30,25 @@ meetsCriteria = false(size(HAMD_by_session_array)); % Assuming 240 rows
 % TotalSessions = 2:width(HAMD_by_session);
 
 % Loop through each participant
-for sessionindex = 3
+for sessionindex = 3:17
     % Compute differences between consecutive scores for each participant
     HAMD_Delta =  HAMD_by_session_array(:, sessionindex + 1) - HAMD_by_session_array(:, sessionindex);
 
     % Calculate the percentage differences
     HAMD_percentdecrease =  (HAMD_by_session_array(:, sessionindex) - HAMD_by_session_array(:, sessionindex + 1)) ./ HAMD_by_session_array(:, sessionindex) * 100;
 
-    % Extract prior 3 ECT sessions
-    HAMD_pre = HAMD_by_session_array(:, (sessionindex - 2):(sessionindex));  
-
-    if sessionindex == 4:17
-         HAMD_pre = HAMD_by_session_array(:, (sessionindex - 1):(sessionindex));  
+    % Extract 3 Pre and 3 Post HAMD values from gain
+    if sessionindex == 3
+         HAMD_pre = HAMD_by_session_array(:, (sessionindex - 1):(sessionindex)); 
+    else 
+        HAMD_pre = HAMD_by_session_array(:, (sessionindex - 2):(sessionindex)); 
     end
 
-    % Extract post 3 ECT sessions
-    HAMD_post = HAMD_by_session_array(:, (sessionindex + 1):(sessionindex + 3));  
+    if sessionindex == 17
+         HAMD_post = HAMD_by_session_array(:, (sessionindex + 1):(sessionindex + 2)); 
+    else 
+        HAMD_post = HAMD_by_session_array(:, (sessionindex + 1):(sessionindex + 3));
+    end  
 
     % Calculate pre standard deviation 
     std_pre = nanstd((HAMD_pre), 0, 2);
@@ -64,78 +67,81 @@ for sessionindex = 3
     rows_with_zeros = (rows_with_NaN_pre == 0) & (rows_with_NaN_post == 0);
 
     % Rows with 1 NaN
-    rows_with_1_NaN_pre = (rows_with_NaN_pre == 1) 
-
-    | (rows_with_NaN_post == 1);
+    rows_with_1_NaN = (rows_with_NaN_pre == 1) & (rows_with_NaN_post == 0) | (rows_with_NaN_pre == 0) & (rows_with_NaN_post == 1);
 
     % Rows with 1 NaN pre and post
     rows_with_1_NaN_prepost = (rows_with_NaN_pre == 1) & (rows_with_NaN_post == 1);
 
     % Rows with 2 NaNs pre or post
-    rows_with_2_NaNs = (rows_with_NaN_pre == 2) | (rows_with_NaN_post == 2);
+    rows_with_2_NaNs = (rows_with_NaN_pre >= 2) | (rows_with_NaN_post >= 2);
 
     % Indexing with rows_with_NaN to access rows with NaN values
+    zero_rows = find(rows_with_zeros);
     One_NaN_rows = find(rows_with_1_NaN);
     PrePost_NaN_rows = find(rows_with_1_NaN_prepost);
     bye_rows =  find(rows_with_2_NaNs);
-    zero_rows = find(rows_with_zeros);
+   
+   
+
+    %% Double Check
+  
+    % % Check for overlapped indexes of participants
+    % commonIndexes = intersect(One_NaN_rows, PrePost_NaN_rows);
+    % commonIndexes2 = intersect(PrePost_NaN_rows, bye_rows);
+
+    % Create a range of all possible row indexes
+    totalRows = 1:240; % Replace 'totalNumberOfRows' with the total number of rows in your data
+
+    % Combine all indexes into one array
+    allIndexes = sort([zero_rows; One_NaN_rows; PrePost_NaN_rows; bye_rows]);
+
+    % Find the missing rows
+    missingRows = setdiff(totalRows, unique(allIndexes));
 
     doublecheck = length(One_NaN_rows) + length(PrePost_NaN_rows) + length(bye_rows) + length(zero_rows);
 
-% % Iterate through rows
-%     for rowIndex = 1:240
-%         % Apply different conditions to specific rows
-%         if any(isnan(HAMD_pre), 2) | any(isnan(HAMD_post), 2);
-%             symptomfluctuation = 3.182 * sqrt(((HAMD_by_session_array(NaN_rows, sessionindex) - 1) .* std_pre.^2 + (HAMD_by_session_array(NaN_index, sessionindex + 1) - 1) .* std_post.^2) ./ (HAMD_by_session_array(NaN_index, sessionindex) + HAMD_by_session_array(NaN_index, sessionindex + 1) - 2));
-%         else symptomfluctuation = 2.776 * sqrt(((HAMD_by_session_array(zero_index, sessionindex) - 1) .* std_pre.^2 + (HAMD_by_session_array(zero_index, sessionindex + 1) - 1) .* std_post.^2) ./ (HAMD_by_session_array(zero_index, sessionindex) + HAMD_by_session_array(zero_index, sessionindex + 1) - 2));
-%         end
-%     end
-% 
-    % Check if this row has NaN in either HAMD_pre or HAMD_post
+    % Apply criteria 3, adjusting for missing values
+            
+    allsymptomfluctuation(bye_rows,:) = NaN;
+       
 
-        % for h = 1:length(3NaN_rows)
-        %     3NaN_index = 3NaN_rows(j);
-        %     symptomfluctuation =  * sqrt(((HAMD_by_session_array(2NaN_index, sessionindex) - 1) .* std_pre(2NaN_index).^2 + (HAMD_by_session_array(2NaN_index, sessionindex + 1) - 1) .* std_post(2NaN_index).^2) ./ (HAMD_by_session_array(2NaN_index, sessionindex) + HAMD_by_session_array(2NaN_index, sessionindex + 1) - 2));
-        % 
-        %     allsymptomfluctuation(NaN_index,:) = symptomfluctuation;
-        % end 
-        % 
-        % for i = 1:length(2NaN_rows)
-        %     2NaN_index = 2NaN_rows(j);
-        %     symptomfluctuation = 4.303 * sqrt(((HAMD_by_session_array(2NaN_index, sessionindex) - 1) .* std_pre(2NaN_index).^2 + (HAMD_by_session_array(2NaN_index, sessionindex + 1) - 1) .* std_post(2NaN_index).^2) ./ (HAMD_by_session_array(2NaN_index, sessionindex) + HAMD_by_session_array(2NaN_index, sessionindex + 1) - 2));
-        % 
-        %     allsymptomfluctuation(NaN_index,:) = symptomfluctuation;
-        % end 
-        % 
-        % for j = 1:length(1NaN_rows)
-        %     1NaN_index = 1NaN_rows(j);
-        %     symptomfluctuation = 3.182 * sqrt(((HAMD_by_session_array(1NaN_index, sessionindex) - 1) .* std_pre(1NaN_index).^2 + (HAMD_by_session_array(1NaN_index, sessionindex + 1) - 1) .* std_post(1NaN_index).^2) ./ (HAMD_by_session_array(1NaN_index, sessionindex) + HAMD_by_session_array(1NaN_index, sessionindex + 1) - 2));
-        % 
-        %     allsymptomfluctuation(NaN_index,:) = symptomfluctuation;
-        % end 
-        % 
-        % for k = 1:length(zero_rows);
-        %     zero_index = zero_rows(k)
-        % symptomfluctuation = 2.776 * sqrt(((HAMD_by_session_array(zero_index, sessionindex) - 1) .* std_pre(NaN_index).^2 + (HAMD_by_session_array(zero_index, sessionindex + 1) - 1) .* std_post(NaN_index).^2) ./ (HAMD_by_session_array(zero_index, sessionindex) + HAMD_by_session_array(zero_index, sessionindex + 1) - 2));
-        % 
-        % allsymptomfluctuation(zero_index,:) = symptomfluctuation;
-        % end
+        for i = 1:length(PrePost_NaN_rows)
+            PrePost_index = PrePost_NaN_rows(i);
+            symptomfluctuation = 4.303 * sqrt(((HAMD_by_session_array(PrePost_index, sessionindex) - 1) .* std_pre(PrePost_index).^2 + (HAMD_by_session_array(PrePost_index, sessionindex + 1) - 1) .* std_post(PrePost_index).^2) ./ (HAMD_by_session_array(PrePost_index, sessionindex) + HAMD_by_session_array(PrePost_index, sessionindex + 1) - 2));
 
-    % Criteria 3: Calculate Mpre - Mpost
-    MeanDelta = mean(HAMD_pre, 2) - mean(HAMD_post, 2);
+            allsymptomfluctuation(PrePost_index,:) = symptomfluctuation;
+        end 
 
-    % % Criteria 3: Calculate symptom fluctuation formula
-    % symptomfluctuation = 2.776 * sqrt(((HAMD_by_session_array(:, sessionindex) - 1) .* std_pre.^2 + (HAMD_by_session_array(:, sessionindex + 1) - 1) .* std_post.^2) ./ (HAMD_by_session_array(:, sessionindex) + HAMD_by_session_array(:, sessionindex + 1) - 2));
-    % 
-    % Check if all three criteria are met for each score difference
-    % criteriaCheck = HAMD_Delta >= -7 & HAMD_percentdecrease >= 25 &  MeanDelta > allsymptomfluctuation;
+        for j = 1:length(One_NaN_rows)
+            OneNaN_index = One_NaN_rows(j);
+            symptomfluctuation = 3.182 * sqrt(((HAMD_by_session_array(OneNaN_index, sessionindex) - 1) .* std_pre(OneNaN_index).^2 + (HAMD_by_session_array(OneNaN_index, sessionindex + 1) - 1) .* std_post(OneNaN_index).^2) ./ (HAMD_by_session_array(OneNaN_index, sessionindex) + HAMD_by_session_array(OneNaN_index, sessionindex + 1) - 2));
+
+            allsymptomfluctuation(OneNaN_index,:) = symptomfluctuation;
+        end 
+
+        for k = 1:length(zero_rows);
+            zero_index = zero_rows(k)
+        symptomfluctuation = 2.776 * sqrt(((HAMD_by_session_array(zero_index, sessionindex) - 1) .* std_pre(zero_index).^2 + (HAMD_by_session_array(zero_index, sessionindex + 1) - 1) .* std_post(zero_index).^2) ./ (HAMD_by_session_array(zero_index, sessionindex) + HAMD_by_session_array(zero_index, sessionindex + 1) - 2));
+
+        allsymptomfluctuation(zero_index,:) = symptomfluctuation;
+        end
+
+        % Criteria 3: Calculate Mpre - Mpost
+    MeanDelta = nanmean(HAMD_pre, 2) - nanmean(HAMD_post, 2);
+    
+    %Check if all three criteria are met for each score difference
+    criteriaCheck = HAMD_Delta <= -7 & HAMD_percentdecrease >= 25 &  MeanDelta > allsymptomfluctuation;
 
     meetsCriteria(:, sessionindex) = criteriaCheck;
+  
 end
+
+sgavg_across_sessions = sum(meetsCriteria, 1);
 
 % Identify rows that meet all criteria
 rows_with_ones = any(meetsCriteria == 1, 2);
 indices_with_ones = find(rows_with_ones);
+
 
  %% Initialize the number of rows and columns for 4x4 subplotx
 numRows = 4;
@@ -159,6 +165,27 @@ HAMD_by_session = [HAMD_by_session, rows_with_ones_table];
 
 % Get the number of people in the table
 TotalParticipants = size(HAMD_by_session, 1);
+
+% Sudden Gain Analysis Comparison: Nili vs Us
+our_sgsum = sum(HAMD_by_session.sg_ppt == 1)
+Nili_sgsum = sum(HAMD_by_session.all_crit == 1)
+allour_gainers = (HAMD_by_session.sg_ppt == 1);
+matching_gainers = all(HAMD_by_session.sg_ppt == 1 & HAMD_by_session.all_crit == 1, 2);
+
+onlyour_gainers = all(HAMD_by_session.sg_ppt == 1 & HAMD_by_session.all_crit == 0, 2);
+onlyNili_gainers = all(HAMD_by_session.sg_ppt == 0 & HAMD_by_session.all_crit == 1, 2);
+sum_matching_gainers = sum(matching_gainers == 1)
+
+row_onlyour_gainers = find(onlyour_gainers);
+row_onlyNiligainers = find(onlyNili_gainers);
+row_matchinggainers = find(matching_gainers);
+row_ourgainers = find(allour_gainers);
+
+
+
+fprintf('Our total sudden gainers: %d\n', our_sgsum);
+fprintf('Nili total sudden gainers: %d\n', Nili_sgsum);
+fprintf('Total matching sudden gainers: %d\n', sum_matching_gainers);
 
 % Loop through each person and create a figure
 for personIndex = 1:TotalParticipants
@@ -189,8 +216,28 @@ for personIndex = 1:TotalParticipants
     %Index through the ID column
     ID = HAMD_by_session.ID(personIndex);
 
-    %Plot the HAMD data for the current person
+      %Plot the HAMD data for the current person
     if sg_ppt == 1 & all_crit == 1
+        plot(0:(width(individual_HAMD) - 1), table2array(individual_HAMD), '-m*')
+
+        % Add labels, titles, legends, etc. to the figure
+        title(['Subject ', num2str(ID), ' SG: session ', num2str(sg_session_n)]);
+        xlabel('ECT Treatment Visit');
+        ylabel('HAM-D Score');
+
+        %Set xlim and ylim
+        xlim([0, max(18)]);
+        ylim([min(0), max(60)]);
+
+%         hold on;
+% 
+% % Plotting specific points in a different color based on the logical array
+% plot(0:(width(individual_HAMD) - 1), HAMD_by_session(meetsCriteria), 'ro', 'MarkerSize', 8); % Plot red circles for specific points
+% 
+% hold off;
+
+        
+    elseif sg_ppt == 1 & all_crit == 0 
         plot(0:(width(individual_HAMD) - 1), table2array(individual_HAMD), '-r*')
 
         % Add labels, titles, legends, etc. to the figure
@@ -201,9 +248,16 @@ for personIndex = 1:TotalParticipants
         %Set xlim and ylim
         xlim([0, max(18)]);
         ylim([min(0), max(60)]);
+
+%         hold on;
+% 
+% % Plotting specific points in a different color based on the logical array
+% plot(0:(width(individual_HAMD) - 1), HAMD_by_session(meetsCriteria), 'ro', 'MarkerSize', 8); % Plot red circles for specific points
+% 
+% hold off;
         
-    elseif sg_ppt == 1 & all_crit == 0
-        plot(0:(width(individual_HAMD) - 1), table2array(individual_HAMD), '--r*')
+    elseif sg_ppt == 0 & all_crit == 1
+        plot(0:(width(individual_HAMD) - 1), table2array(individual_HAMD), '-b*')
 
         % Add labels, titles, legends, etc. to the figure
         title(['Subject ', num2str(ID), ' SG: session ', num2str(sg_session_n)]);
@@ -213,21 +267,15 @@ for personIndex = 1:TotalParticipants
         %Set xlim and ylim
         xlim([0, max(18)]);
         ylim([min(0), max(60)]);
-        
-    elseif sg_ppt == 0 & all_crit = 1
-        plot(0:(width(individual_HAMD) - 1), table2array(individual_HAMD), '--*')
 
-        % Add labels, titles, legends, etc. to the figure
-        title(['Subject ', num2str(ID), ' SG: session ', num2str(sg_session_n)]);
-        xlabel('ECT Treatment Visit');
-        ylabel('HAM-D Score');
-
-        %Set xlim and ylim
-        xlim([0, max(18)]);
-        ylim([min(0), max(60)]);
+%         hold on;
+% 
+% % Plotting specific points in a different color based on the logical array
+% plot(0:(width(individual_HAMD) - 1), HAMD_by_session(meetsCriteria), 'ro', 'MarkerSize', 8); % Plot red circles for specific points
+% 
+% hold off;
         
-    else
-    plot(0:(width(individual_HAMD) - 1), table2array(individual_HAMD), '-*')
+    else plot(0:(width(individual_HAMD) - 1), table2array(individual_HAMD), '-k*')
 
     % Add labels, titles, legends, etc. to the figure
     title(['Subject ', num2str(ID)]);
@@ -238,9 +286,30 @@ for personIndex = 1:TotalParticipants
     xlim([0, max(18)]);
     ylim([min(0), max(60)]);
 
+%     hold on;
+% 
+% % Plotting specific points in a different color based on the logical array
+% plot(0:(width(individual_HAMD) - 1), HAMD_by_session(meetsCriteria), 'ro', 'MarkerSize', 8); % Plot red circles for specific points
+% 
+% hold off;
+
     end
 end
+   
+figure
 
+%% Plot quantity of sudden gains across sessions
+   %plot(0:(width(individual_HAMD)), sgavg_across_sessions(1:19), '*')
+   bar(1:(width(individual_HAMD)), sgavg_across_sessions(2:end), 'b');
+
+        % Add labels, titles, legends, etc. to the figure
+        title(['Sudden Gains Across Sessions']);
+        xlabel('ECT Treatment Visit');
+        ylabel('Number of Sudden Gains');
+
+        %Set xlim and ylim
+        xlim([0, max(18)]);
+        ylim([min(0), max(32)]);
 
 %     % If we have created a full set of subplots, create a new figure
 %     if mod(personIndex, numSubplots) == 0
